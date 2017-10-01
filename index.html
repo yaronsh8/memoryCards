@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Memory game</title>
+    <link rel="stylesheet" href="reset.css">
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+    <div class="wrapper">
+        <div class="title">Memory Color Game</div>
+        <ul class="selectedCardsList"></ul>
+        <ul class="colorPicker"></ul>
+
+    </div>
+
+</body>
+
+<script>
+    const colorArray = [
+        "rgb(255, 0, 0)", //red
+        "rgb(255, 255, 0)", //yellow
+        "rgb(0, 128, 0)", //green
+        "rgb(0, 0, 255)", //blue
+        "rgb(128, 0, 128)", //purple
+        "rgb(255, 165, 0)", //orange
+        "rgb(128, 128, 0)", //olive
+        "rgb(128, 128, 128)", //gray
+        "rgb(0, 0, 0)" //black
+
+    ];
+
+    var NUM_OF_CARDS = 3;
+    var selectedCardsArray = [];
+    var selectedColorsArray = [];
+    var currentCardIndex = 0;
+    var colorPickerArray = [];
+    var isCleanup = false;
+    var visibleSeconds = 2000;
+
+
+    function renderScreen(colorArray, numOfCards = NUM_OF_CARDS) {
+
+        // function renderTitle() {
+
+        //     var titleObject = document.querySelector('.title');
+        //     isCleanup ? titleObject.innerHTML = "" : titleObject.innerHTML = "Memory Game"
+        // }
+
+        function renderCards(numOfCards) {
+            var selectedCardsList = document.querySelector(".selectedCardsList");
+            if (isCleanup) {
+                selectedCardsList.innerHTML = "";
+            } else {
+                for (var i = 0; i < numOfCards; i++) {
+                    var newLI = selectedCardsList.appendChild(document.createElement("LI"));
+                    newLI.classList.add("card");
+
+                }
+
+            }
+        }
+
+        function renderColorPicker(colorArray) {
+            var colorPicker = document.querySelector(".colorPicker");
+            if (isCleanup) {
+                colorPicker.innerHTML = "";
+            } else {
+
+
+                for (color of colorArray) {
+                    var newColor = colorPicker.appendChild(document.createElement("LI"));
+                    newColor.classList.add("colorOption");
+                    newColor.style.backgroundColor = color;
+                    newColor.addEventListener('click', checkForMatch);
+                    colorPickerArray.push(newColor);
+                }
+            }
+
+        }
+
+        // renderTitle();
+        renderCards(numOfCards);
+        renderColorPicker(colorArray);
+    }
+
+
+    function rand(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1)) + min; //The maximum is inclusive and the minimum is inclusive 
+    }
+
+    function selectRandomCards(colorArray, numOfCards = NUM_OF_CARDS) {
+        var colorArrayCopy = [...colorArray]; //copy the color array
+        var selectedCardsArray = Array.from(document.querySelectorAll(".card"));
+        for (card of selectedCardsArray) {
+            var selectedColor = colorArrayCopy.splice(colorArrayCopy.indexOf(colorArrayCopy[rand(0, colorArrayCopy.length -
+                1)]), 1).join();
+            card.style.backgroundColor = selectedColor;
+            selectedColorsArray.push(selectedColor);
+        }
+        return selectedCardsArray;
+    }
+
+    function hideSelectedCardsHandler() {
+        for (card of selectedCardsArray) {
+            card.style.backgroundColor = "rgb(255, 255, 255)"; //white
+        }
+    }
+
+    function focusOnNextCard() {
+        selectedCardsArray[currentCardIndex].classList.add("boldCard");
+    }
+
+    function hideSelectedCards() {
+        setTimeout(function () {
+            hideSelectedCardsHandler()
+            focusOnNextCard();
+        }, visibleSeconds);
+    }
+
+
+    function checkForMatch(e) {
+        console.log(selectedCardsArray[currentCardIndex].style.backgroundColor);
+        if (selectedCardsArray[currentCardIndex].style.backgroundColor == "rgb(255, 255, 255)") {
+            var guessedColor = window.getComputedStyle(e.target).backgroundColor;
+            var correctColor = selectedColorsArray[currentCardIndex];
+            selectedCardsArray[currentCardIndex].style.backgroundColor = correctColor;
+
+            if (guessedColor == correctColor) {
+                if (checkForLastCard() == true) {
+                    NUM_OF_CARDS++;
+                    visibleSeconds += 1000;
+                    checkForAnotherGame(1);
+                } else {
+                    currentCardIndex++;
+                    focusOnNextCard();
+                }
+            } else {
+                NUM_OF_CARDS = 3;
+                visibleSeconds = 2000;
+                checkForAnotherGame(0);
+            }
+        }
+    }
+
+    function colorMatchedCard() {
+
+    }
+
+    function checkForLastCard() {
+        return (currentCardIndex == selectedCardsArray.length - 1);
+    }
+
+    function checkForAnotherGame(isWin) {
+        var winMessage = "Congratulations!! You did it :-)";
+        var loseMessage = "Oooops, You missed this one :-(";
+        var playAgainMessage = " \n Play again?";
+        var message = isWin ? winMessage : loseMessage;
+        message += playAgainMessage;
+        console.log(message);
+        setTimeout(function () {
+            var isPlayAgain = confirm(message);
+            isPlayAgain ? cleanUp() : leaveGame();
+        }, 500);
+
+
+
+    }
+
+
+    function leaveGame() {
+        console.log("Leaving... Bye !");
+    }
+
+    function cleanUp() {
+        selectedCardsArray = [];
+        selectedColorsArray = [];
+        currentCardIndex = 0;
+        colorPickerArray = [];
+        isCleanup = true;
+        renderScreen(colorArray, NUM_OF_CARDS);
+
+        init();
+
+    }
+
+    function init() {
+        isCleanup = false
+        renderScreen(colorArray, NUM_OF_CARDS);
+        selectedCardsArray = selectRandomCards(colorArray);
+        hideSelectedCards();
+    }
+
+    init()
+</script>
+
+</html>
